@@ -1,0 +1,13 @@
+{
+  "name": "tp2-dataviz",
+  "version": "1.0.0",
+  "description": "Uma visualização em pétalas de flores",
+  "scripts": {
+    "prepare": "npm install -g postcss postcss-cssnext livereload",
+    "css": "postcss --use postcss-cssnext --dir assets/css/ assets/css/src/*.css",
+    "build": "npm run css",
+    "dev": "postcss --use postcss-cssnext --dir assets/css/ assets/css/src/*.css -w"
+  },
+  "author": "Flávio Coutinho",
+  "license": "ISC"
+}
