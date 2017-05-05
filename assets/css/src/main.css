@@ -5,3 +5,7 @@
 .author {
   color: white;
 }
+
+#main-visualization {
+  box-sizing: border-box;
+}
