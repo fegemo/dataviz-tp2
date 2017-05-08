@@ -28,6 +28,42 @@ class Petal {
   color() {
     return 'white';
   }
+
+  static get colorScale() {
+    Petal._colorScale = Petal._colorScale || d3.scaleOrdinal(d3.schemeCategory20);
+    return Petal._colorScale;
+  }
+
+  static getPetalData(flowerType = 'daisy') {
+    let petalByFlowerType = {
+      daisy: [
+        { x: 0.00, y: 0.00},
+        { x: 0.25, y: 1.00},
+        { x: 0.50, y: 0.75},
+        { x: 0.75, y: 0.50},
+        { x: 1.00, y: 0.00}
+      ],
+      ornitop: [
+        { x: 0.00, y: 0.00},
+        { x: 0.25, y: 0.20},
+        { x: 0.50, y: 0.85},
+        { x: 0.75, y: 0.90},
+        { x: 1.00, y: 0.00}
+      ]
+    }
+    return petalByFlowerType[flowerType];
+  }
+
+  static getPathGenerator({xScale, yScale}) {
+    return d3.line()
+      .x(d => xScale(d.x))
+      .y(d => yScale(d.y))
+      .curve(d3.curveBasis);
+  }
+
+  // static getPetalElement(el) {
+  //   return el.selectA
+  // }
 }
 
 
@@ -44,16 +80,16 @@ class PetalVisualization {
     this.createGraph();
     let scales = this.getScales();
     this.createAxes(scales);
-    // this.createPetals(scales);
+    this.createPetals(scales);
     this.createDots(scales);
   }
 
   determineBounds() {
     this.padding = {
-      top: 20,
-      right: 20,
-      bottom: 80,
-      left: 40
+      top: 40,
+      right: 40,
+      bottom: 40,
+      left: 50
     };
 
     this.containerDimensions = {
@@ -78,8 +114,7 @@ class PetalVisualization {
             .domain(this.data.map(c => c.name))
             ,
       y:  d3.scaleLinear()
-            .domain([yBounds[1], yBounds[0]])
-            // .domain(yBounds)
+            .domain([yBounds[1], 0])
             .range([0, this.graphDimensions.height])
     };
   }
@@ -107,36 +142,80 @@ class PetalVisualization {
     this.styleAxisNodes(verticalAxisNodes);
   }
 
+  createPetals(scales) {
+    // let petalGenerator = Petal.getGenerator();
+    this.mainGroupEl.selectAll()
+  }
+
   createDots(scales) {
     let dotGroupEl = this.mainGroupEl.selectAll('g')
       .data(this.data)
       .enter()
       .append('g')
       .attr('transform', (d, i, nodes) =>
-        // `translate(${scales.x(d.name)}, ${this.graphDimensions.height - scales.y(d.averageIndex())})`);
         `translate(${scales.x(d.name)}, ${scales.y(d.averageIndex())})`);
+
+    // miolo
+    const kernelRadius = 2;
     dotGroupEl.append('circle')
-      .attr('fill', 'green')
-      .attr('r', 2);
+      .attr('fill', 'black')
+      .attr('r', kernelRadius);
+
+    // caule
     dotGroupEl.append('line')
       .attr('stroke', 'black')
       .attr('stroke-width', '1')
       .attr('opacity', 0.3)
       .attr('x1', 0)
       .attr('y1', d => this.graphDimensions.height - scales.y(d.averageIndex()))
-      // .attr('y1', this.graphDimensions.height)
       .attr('x2', 0)
-      .attr('y2', 0);
-      // .attr('y2', d => scales.y(d.averageIndex()));
+      .attr('y2', kernelRadius);
+
+    // texto no caule
     dotGroupEl.append('text')
       .text(d => d.name)
       .attr('fill', 'black')
       .attr('font-size', 12)
       .attr('font-family', 'Arial')
       .attr('transform', 'rotate(-90)')
-      .attr('dx', '-10')
-      .attr('dy', '1')
+      .attr('dx', '-30')
+      .attr('dy', '0')
       .attr('text-anchor', 'end');
+
+
+    // pétalas
+    let petalsGroupEl = dotGroupEl
+      .append('g')
+      .classed('petals', true);
+
+    petalsGroupEl.selectAll('g.petal')
+      .data(d => d.indices)
+      .enter()
+      .append('g')
+        .classed('petal', true)
+        .html(d => d)
+        .each((d, i, nodes) => {
+          // para cada pétala...
+
+          let petalGroupEl = d3.select(nodes[i]);
+          [1, -1].forEach(v => {
+            petalGroupEl
+              .append('path')
+              .classed(`petal-${i}`, true)
+              .attr('d', d => Petal.getPathGenerator({
+                xScale: d3.scaleLinear().range([0, d * 25]),
+                yScale: d3.scaleLinear().range([0, v * 3])
+              })(Petal.getPetalData('ornitop')))
+              .attr('stroke', Petal.colorScale(i))
+              // .attr('stroke', 'rgba(0,0,0,.5)')
+              .attr('stroke-width', 2)
+              // .attr('fill', 'transparent')
+              .attr('fill', Petal.colorScale(i))
+              .attr('transform', d => `rotate(${i / nodes.length * 360}) translate(2 0)`);
+          });
+
+          // Petal.dropPetal();
+        });
   }
 
 
