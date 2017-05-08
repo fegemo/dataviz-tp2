@@ -18,17 +18,27 @@ class Petal {
     this.indexName = indexName;
   }
 
+
+  get slugifiedIndexName() {
+    return this.indexName
+      .replace(/\s/gi, '-')
+      .toLowerCase();
+  }
+
   get value() {
     return this.country.indices
       .find(idx => idx.name === this.indexName)
       .value;
   }
 
-  dropPetal(container, i, nodes) {
+  dropPetal(flowerContainer, i, nodes) {
+    flowerContainer
+      .classed(`petal-${i}`, true)
+      .classed(`petal-${this.slugifiedIndexName}`, true);
+
     [1, -1].forEach(v => {
-      container
+      flowerContainer
         .append('path')
-        .classed(`petal-${i}`, true)
         .attr('d', petal => Petal.getPathGenerator({
           xScale: d3.scaleLinear().range([0, petal.value * 25]),
           yScale: d3.scaleLinear().range([0, v * 3])
@@ -87,7 +97,8 @@ class PetalVisualization {
     this.createGraph();
     let scales = this.getScales();
     this.createAxes(scales);
-    this.createDots(scales);
+    this.createFlowers(scales);
+    this.attachHoverPetals();
   }
 
   determineBounds() {
@@ -145,22 +156,23 @@ class PetalVisualization {
     this.styleAxisNodes(verticalAxisNodes);
   }
 
-  createDots(scales) {
-    let dotGroupEl = this.mainGroupEl.selectAll('g')
+  createFlowers(scales) {
+    let flowerGroupEl = this.mainGroupEl.selectAll('g')
       .data(this.data)
       .enter()
       .append('g')
+      .classed('flower', true)
       .attr('transform', (d, i, nodes) =>
         `translate(${scales.x(d.name)}, ${scales.y(d.averageIndex())})`);
 
     // miolo
     const kernelRadius = 2;
-    dotGroupEl.append('circle')
+    flowerGroupEl.append('circle')
       .attr('fill', 'black')
       .attr('r', kernelRadius);
 
     // caule
-    dotGroupEl.append('line')
+    flowerGroupEl.append('line')
       .attr('stroke', 'black')
       .attr('stroke-width', '1')
       .attr('opacity', 0.3)
@@ -170,7 +182,7 @@ class PetalVisualization {
       .attr('y2', kernelRadius);
 
     // texto no caule
-    dotGroupEl.append('text')
+    flowerGroupEl.append('text')
       .text(d => d.name)
       .attr('fill', 'black')
       .attr('font-size', 12)
@@ -182,7 +194,7 @@ class PetalVisualization {
 
 
     // pétalas
-    let petalsGroupEl = dotGroupEl
+    let petalsGroupEl = flowerGroupEl
       .append('g')
       .classed('petals', true);
 
@@ -197,6 +209,26 @@ class PetalVisualization {
           // para cada pétala...
           d.dropPetal(d3.select(nodes[i]), i, nodes);
         });
+  }
+
+  attachHoverPetals() {
+    let fadeBackInTimeout;
+
+    this.mainGroupEl.selectAll('.petal')
+      .on('mouseover', (d, i, nodes) => {
+        window.clearTimeout(fadeBackInTimeout);
+
+        let hoveredPetalEl = nodes[i];
+        let hoveredPetalClass = Array.from(hoveredPetalEl.classList)
+          .find(c => /petal\-\d+/.test(c));
+        this.mainGroupEl.selectAll(`.petal`)
+          .classed('faded-out', (d, i, nodes) => !nodes[i].classList.contains(hoveredPetalClass));
+      })
+      .on('mouseout', (d, i, nodes) => {
+        fadeBackInTimeout = window.setTimeout(() => {
+          Array.from(nodes).forEach(n => n.classList.remove('faded-out'));
+        }, 400);
+      });
   }
 
 

@@ -1,0 +1,11 @@
+:root {
+  --faded-out-opacity: 0.4;
+}
+
+.faded-out {
+  opacity: var(--faded-out-opacity);
+}
+
+.petal {
+  transition: opacity 100ms linear;
+}

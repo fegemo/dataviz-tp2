@@ -1,0 +1,9 @@
+.faded-out {
+  opacity: 0.4;
+}
+
+.petal {
+  transition: opacity 100ms linear;
+}
+
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInNyYy9wZXRhbGxpYy5jc3MiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBSUE7RUFDRSxhQUFrQztDQUNuQzs7QUFFRDtFQUNFLGlDQUFpQztDQUNsQyIsImZpbGUiOiJwZXRhbGxpYy5jc3MiLCJzb3VyY2VzQ29udGVudCI6WyI6cm9vdCB7XG4gIC0tZmFkZWQtb3V0LW9wYWNpdHk6IDAuNDtcbn1cblxuLmZhZGVkLW91dCB7XG4gIG9wYWNpdHk6IHZhcigtLWZhZGVkLW91dC1vcGFjaXR5KTtcbn1cblxuLnBldGFsIHtcbiAgdHJhbnNpdGlvbjogb3BhY2l0eSAxMDBtcyBsaW5lYXI7XG59XG4iXX0= */
