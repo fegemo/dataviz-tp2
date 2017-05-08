@@ -7,11 +7,8 @@ class Country {
   }
 
   averageIndex() {
-    // TODO parece que existe d3.mean(array, funcaoMap)
     return this.average ? this.average :
-      (this.average = d3.values(this.indices).reduce
-        ((prev, curr) => prev + curr, 0) / d3.keys(this.indices).length
-      );
+      (d3.mean(this.indices, idx => idx.value));
   }
 }
 
@@ -21,12 +18,26 @@ class Petal {
     this.indexName = indexName;
   }
 
-  value() {
-    return this.country.indices[this.indexName];
+  get value() {
+    return this.country.indices
+      .find(idx => idx.name === this.indexName)
+      .value;
   }
 
-  color() {
-    return 'white';
+  dropPetal(container, i, nodes) {
+    [1, -1].forEach(v => {
+      container
+        .append('path')
+        .classed(`petal-${i}`, true)
+        .attr('d', petal => Petal.getPathGenerator({
+          xScale: d3.scaleLinear().range([0, petal.value * 25]),
+          yScale: d3.scaleLinear().range([0, v * 3])
+        })(Petal.getPetalData('ornitop')))
+        .attr('stroke', Petal.colorScale(i))
+        .attr('stroke-width', 2)
+        .attr('fill', Petal.colorScale(i))
+        .attr('transform', d => `rotate(${i / nodes.length * 360}) translate(2 0)`);
+    });
   }
 
   static get colorScale() {
@@ -60,10 +71,6 @@ class Petal {
       .y(d => yScale(d.y))
       .curve(d3.curveBasis);
   }
-
-  // static getPetalElement(el) {
-  //   return el.selectA
-  // }
 }
 
 
@@ -80,7 +87,6 @@ class PetalVisualization {
     this.createGraph();
     let scales = this.getScales();
     this.createAxes(scales);
-    this.createPetals(scales);
     this.createDots(scales);
   }
 
@@ -124,9 +130,6 @@ class PetalVisualization {
     this.svgEl
       .attr('width', '100%')
       .attr('height', '100%');
-        // width: `${this.containerDimensions.width}px`,
-        // height: `${this.containerDimensions.height}px`
-      // });
 
     this.mainGroupEl = this.svgEl.append('g');
     this.mainGroupEl
@@ -140,11 +143,6 @@ class PetalVisualization {
     this.verticalAxis = d3.axisLeft(scales.y);
     let verticalAxisNodes = verticalAxisGroupEl.call(this.verticalAxis);
     this.styleAxisNodes(verticalAxisNodes);
-  }
-
-  createPetals(scales) {
-    // let petalGenerator = Petal.getGenerator();
-    this.mainGroupEl.selectAll()
   }
 
   createDots(scales) {
@@ -189,32 +187,15 @@ class PetalVisualization {
       .classed('petals', true);
 
     petalsGroupEl.selectAll('g.petal')
-      .data(d => d.indices)
+      .data(d => d.indices.map(
+        index => new Petal(d, index.name)))
       .enter()
       .append('g')
         .classed('petal', true)
         .html(d => d)
         .each((d, i, nodes) => {
           // para cada pétala...
-
-          let petalGroupEl = d3.select(nodes[i]);
-          [1, -1].forEach(v => {
-            petalGroupEl
-              .append('path')
-              .classed(`petal-${i}`, true)
-              .attr('d', d => Petal.getPathGenerator({
-                xScale: d3.scaleLinear().range([0, d * 25]),
-                yScale: d3.scaleLinear().range([0, v * 3])
-              })(Petal.getPetalData('ornitop')))
-              .attr('stroke', Petal.colorScale(i))
-              // .attr('stroke', 'rgba(0,0,0,.5)')
-              .attr('stroke-width', 2)
-              // .attr('fill', 'transparent')
-              .attr('fill', Petal.colorScale(i))
-              .attr('transform', d => `rotate(${i / nodes.length * 360}) translate(2 0)`);
-          });
-
-          // Petal.dropPetal();
+          d.dropPetal(d3.select(nodes[i]), i, nodes);
         });
   }
 
@@ -257,7 +238,10 @@ d3.queue()
         name: countriesBySymbol[d.country],
         indices: delete d.country &&
           d3.keys(d)
-            .map(idxName => d[idxName] = Number.parseFloat(d[idxName]))
+            .map(idxName => ({
+              name: idxName,
+              value: Number.parseFloat(d[idxName])
+            }))
       }))
     });
 
