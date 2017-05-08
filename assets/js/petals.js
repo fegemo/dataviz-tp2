@@ -36,18 +36,33 @@ class Petal {
       .classed(`petal-${i}`, true)
       .classed(`petal-${this.slugifiedIndexName}`, true);
 
-    [1, -1].forEach(v => {
-      flowerContainer
-        .append('path')
-        .attr('d', petal => Petal.getPathGenerator({
-          xScale: d3.scaleLinear().range([0, petal.value * 25]),
-          yScale: d3.scaleLinear().range([0, v * 3])
-        })(Petal.getPetalData('ornitop')))
-        .attr('stroke', Petal.colorScale(i))
-        .attr('stroke-width', 2)
-        .attr('fill', Petal.colorScale(i))
-        .attr('transform', d => `rotate(${i / nodes.length * 360}) translate(2 0)`);
-    });
+    // [1, -1].forEach(v => {
+    //   flowerContainer
+    //     .append('path')
+    //     .attr('d', petal => Petal.getPathGenerator({
+    //       xScale: d3.scaleLinear().range([0, petal.value * 25]),
+    //       yScale: d3.scaleLinear().range([0, v * 3])
+    //     })(Petal.getPetalData('ornitop')))
+    //     .attr('stroke', Petal.colorScale(i))
+    //     .attr('stroke-width', 2)
+    //     .attr('fill', Petal.colorScale(i))
+    //     .attr('transform', d => `rotate(${i / nodes.length * 360}) translate(2 0)`);
+    // });
+    let flowerType = 'ornitop';
+    let petalData = Petal.getPetalData(flowerType)
+      .concat(Petal.getPetalData(flowerType).map(p => ({ x: p.x, y: -p.y })).reverse());
+
+    flowerContainer.
+      append('path')
+      .attr('d', petal => Petal.getPathGenerator({
+        xScale: d3.scaleLinear().range([0, petal.value * 25]),
+        yScale: d3.scaleLinear().range([0, 3])
+      })(petalData))
+      .attr('stroke', Petal.colorScale(i))
+      .attr('stroke-width', 2)
+      .attr('fill', Petal.colorScale(i))
+      .attr('transform', d => `rotate(${i / nodes.length * 360}) translate(2, 0)`);
+
   }
 
   static get colorScale() {
@@ -69,6 +84,19 @@ class Petal {
         { x: 0.25, y: 0.20},
         { x: 0.50, y: 0.85},
         { x: 0.75, y: 0.90},
+        { x: 1.00, y: 0.00}
+      ],
+      cylindric: [
+        { x: 0.00, y: 0.00},
+        { x: 0.05, y: 0.05},
+        { x: 0.10, y: 0.10},
+        { x: 0.15, y: 0.15},
+        { x: 0.20, y: 0.95},
+        { x: 0.40, y: 1.00},
+        { x: 0.80, y: 1.00},
+        { x: 0.85, y: 0.90},
+        { x: 0.90, y: 0.85},
+        { x: 0.95, y: 0.80},
         { x: 1.00, y: 0.00}
       ]
     }
@@ -124,8 +152,7 @@ class PetalVisualization {
     let yBounds = d3.extent(this.data, d => d.averageIndex());
 
     return {
-      x:  d3
-            .scaleBand()
+      x:  d3.scaleBand()
             .padding(0.05)
             .range([this.padding.left, this.padding.left + this.graphDimensions.width])
             .domain(this.data.map(c => c.name))
