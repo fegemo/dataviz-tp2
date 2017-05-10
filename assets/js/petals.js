@@ -36,18 +36,6 @@ class Petal {
       .classed(`petal-${i}`, true)
       .classed(`petal-${this.slugifiedIndexName}`, true);
 
-    // [1, -1].forEach(v => {
-    //   flowerContainer
-    //     .append('path')
-    //     .attr('d', petal => Petal.getPathGenerator({
-    //       xScale: d3.scaleLinear().range([0, petal.value * 25]),
-    //       yScale: d3.scaleLinear().range([0, v * 3])
-    //     })(Petal.getPetalData('ornitop')))
-    //     .attr('stroke', Petal.colorScale(i))
-    //     .attr('stroke-width', 2)
-    //     .attr('fill', Petal.colorScale(i))
-    //     .attr('transform', d => `rotate(${i / nodes.length * 360}) translate(2 0)`);
-    // });
     let flowerType = 'ornitop';
     let petalData = Petal.getPetalData(flowerType)
       .concat(Petal.getPetalData(flowerType).map(p => ({ x: p.x, y: -p.y })).reverse());
