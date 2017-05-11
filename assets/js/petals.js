@@ -13,28 +13,17 @@ class Country {
 }
 
 class Petal {
-  constructor(country, indexName) {
+  constructor({ name, value }, country) {
+    this.value = value;
+    this.indexName = name;
     this.country = country;
-    this.indexName = indexName;
   }
 
-
-  get slugifiedIndexName() {
-    return this.indexName
-      .replace(/\s/gi, '-')
-      .toLowerCase();
-  }
-
-  get value() {
-    return this.country.indices
-      .find(idx => idx.name === this.indexName)
-      .value;
-  }
 
   dropPetal(flowerContainer, i, nodes) {
     flowerContainer
-      .classed(`petal-${i}`, true)
-      .classed(`petal-${this.slugifiedIndexName}`, true);
+      .classed(`category`, true)
+      .classed(`category-${slugify(this.indexName)}`, true);
 
     let flowerType = 'ornitop';
     let petalData = Petal.getPetalData(flowerType)
@@ -104,35 +93,35 @@ class PetalVisualization {
   constructor({ container, data }) {
     this.containerEl = d3.select(container);
     this.data = data;
-  }
-
-  load() {
-    let availableHeight = window.innerHeight - this.containerEl.node().offsetTop;
-    this.containerEl.style('height', `${availableHeight}px`);
-    this.determineBounds();
-    this.createGraph();
-    let scales = this.getScales();
-    this.createAxes(scales);
-    this.createFlowers(scales);
-    this.attachHoverPetals();
-  }
-
-  determineBounds() {
-    this.padding = {
+    this.graphPadding = {
       top: 40,
       right: 40,
       bottom: 40,
       left: 50
     };
+  }
 
+  load() {
+    let availableHeight = window.innerHeight - this.containerEl.node().offsetTop;
+    this.containerEl.style('height', `${availableHeight}px`);
+    this.createGraph();
+    this.determineBounds();
+    let scales = this.getScales();
+    this.createAxes(scales);
+    this.createFlowers(scales);
+    this.createLegend();
+    this.attachHoverPetals();
+  }
+
+  determineBounds() {
     this.containerDimensions = {
-      width: this.containerEl.node().getClientRects()[0].width,
-      height: this.containerEl.node().getClientRects()[0].height
+      width: this.graphEl.node().getClientRects()[0].width,
+      height: this.graphEl.node().getClientRects()[0].height
     };
 
     this.graphDimensions = {
-      width: this.containerDimensions.width - (this.padding.left + this.padding.right),
-      height: this.containerDimensions.height - (this.padding.top + this.padding.bottom)
+      width: this.containerDimensions.width - (this.graphPadding.left + this.graphPadding.right),
+      height: this.containerDimensions.height - (this.graphPadding.top + this.graphPadding.bottom)
     };
   }
 
@@ -142,7 +131,7 @@ class PetalVisualization {
     return {
       x:  d3.scaleBand()
             .padding(0.05)
-            .range([this.padding.left, this.padding.left + this.graphDimensions.width])
+            .range([this.graphPadding.left, this.graphPadding.left + this.graphDimensions.width])
             .domain(this.data.map(c => c.name))
             ,
       y:  d3.scaleLinear()
@@ -152,20 +141,17 @@ class PetalVisualization {
   }
 
   createGraph() {
-    this.svgEl = this.containerEl.append('svg');
-    this.svgEl
-      .attr('width', '100%')
-      .attr('height', '100%');
+    this.graphEl = this.containerEl.append('svg').classed('graph', true);
 
-    this.mainGroupEl = this.svgEl.append('g');
-    this.mainGroupEl
-      .attr('transform', `translate(${this.padding.left/2}, ${this.padding.top})` );
+    this.mainGroupEl = this.graphEl
+      .append('g')
+      .attr('transform', `translate(${this.graphPadding.left/2}, ${this.graphPadding.top})` );
   }
 
   createAxes(scales) {
-    let verticalAxisGroupEl = this.svgEl.append('g');
+    let verticalAxisGroupEl = this.graphEl.append('g');
     verticalAxisGroupEl.attr(
-      'transform', `translate(${this.padding.left}, ${this.padding.top})`);
+      'transform', `translate(${this.graphPadding.left}, ${this.graphPadding.top})`);
     this.verticalAxis = d3.axisLeft(scales.y);
     let verticalAxisNodes = verticalAxisGroupEl.call(this.verticalAxis);
     this.styleAxisNodes(verticalAxisNodes);
@@ -215,7 +201,7 @@ class PetalVisualization {
 
     petalsGroupEl.selectAll('g.petal')
       .data(d => d.indices.map(
-        index => new Petal(d, index.name)))
+        index => new Petal(d.indices.find(i => i.name === index.name), d)))
       .enter()
       .append('g')
         .classed('petal', true)
@@ -229,14 +215,14 @@ class PetalVisualization {
   attachHoverPetals() {
     let fadeBackInTimeout;
 
-    this.mainGroupEl.selectAll('.petal')
+    this.containerEl.selectAll('.category')
       .on('mouseover', (d, i, nodes) => {
         window.clearTimeout(fadeBackInTimeout);
 
         let hoveredPetalEl = nodes[i];
         let hoveredPetalClass = Array.from(hoveredPetalEl.classList)
-          .find(c => /petal\-\d+/.test(c));
-        this.mainGroupEl.selectAll(`.petal`)
+          .find(c => /category\-[^\d]+/.test(c));
+        this.containerEl.selectAll('.category')
           .classed('faded-out', (d, i, nodes) => !nodes[i].classList.contains(hoveredPetalClass));
       })
       .on('mouseout', (d, i, nodes) => {
@@ -244,6 +230,79 @@ class PetalVisualization {
           Array.from(nodes).forEach(n => n.classList.remove('faded-out'));
         }, 400);
       });
+  }
+
+  createLegend() {
+    // housing,income,jobs,community,education,environment,
+    // civic engagement,health,life satisfaction,safety,work-life balance
+    this.legendEl = this.containerEl.append('svg')
+      .classed('legend', true);
+
+    let categories = this.data[0].indices.map(idx => idx.name);
+
+    // cria a flor que fica no alto
+    let flowerGroup = this.legendEl.append('g')
+      .classed('flower', true)
+      .classed('legend-flower', true);
+
+    flowerGroup.selectAll('g.petal')
+      .data(categories.map(c => new Petal({ name: c, value: 1}, null)))
+      .enter()
+      .append('g')
+        .attr('transform', `translate(
+          ${this.legendEl.node().getClientRects()[0].width/2}, 100) scale(2.5)`)
+        .classed('petal', true)
+        .classed('category', true)
+        .html(d => d)
+        .each((d, i, nodes) => {
+          // para cada pétala...
+          d.dropPetal(d3.select(nodes[i]), i, nodes);
+        });
+
+    // cria os ícones das categorias e seus nomes
+    let categoryGroups = this.legendEl.append('g')
+      .classed('categories', true)
+      .attr('transform', `translate(0 ${flowerGroup.node().getBoundingClientRect().bottom})`)
+      .selectAll('g.category')
+      .data(categories)
+      .enter()
+      .append('g')
+        .classed('category-group', true)
+        .attr('transform', (d, i) => `translate(0, ${i*30})`)
+        .style('color', (d, i) => Petal.colorScale(i));
+
+    categoryGroups.append('circle')
+        .style('fill', d => `url(#fill-for-${slugify(d)})`)
+        .attr('r', 12.5)
+        .attr('cx', 12.5)
+        .attr('cy', 12.5)
+        .classed('category', true)
+        .each((d, i, nodes) => {
+          nodes[i].classList.add(`category-${slugify(d)}`);
+        });
+
+    // pattern para os ícones das categorias
+    let iconPatterns = categoryGroups.append('defs')
+      .append('pattern')
+      .attr('id', d => `fill-for-${slugify(d)}`)
+      .attr('height', '100%')
+      .attr('width', '100%')
+      .attr('viewBox', '0 0 25 25')
+    iconPatterns.append('rect')
+      .attr('fill', 'currentColor')
+      .attr('height', 25)
+      .attr('width', 25);
+    iconPatterns.append('svg:image')
+        .attr('xlink:href', d => `assets/img/icons/${slugify(d)}.svg`)
+        .attr('height', 25)
+        .attr('width', 25)
+        .attr('transform', 'translate(6.25 6.25) scale(0.5)');
+
+
+
+    categoryGroups.append('text')
+      .text(d => d)
+      .attr('transform', `translate(30 15)`);
   }
 
 

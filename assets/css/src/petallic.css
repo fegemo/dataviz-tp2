@@ -1,11 +1,46 @@
 :root {
-  --faded-out-opacity: 0.4;
+  --faded-out-petal-opacity: 0.4;
+  --legend-width-when-large: 200px;
 }
 
 .faded-out {
-  opacity: var(--faded-out-opacity);
+  opacity: var(--faded-out-petal-opacity);
 }
 
 .petal {
   transition: opacity 100ms linear;
+}
+
+svg.graph {
+  height: 100%;
+}
+
+.category-icon {
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+@media (min-width: 480px) and (max-width: 1023px) {
+  svg.legend {
+    width: 100%;
+  }
+
+  svg.graph {
+    width: 100%;
+  }
+
+  .legend-flower {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  svg.legend {
+    width: var(--legend-width-when-large);
+    height: 100%;
+  }
+
+  svg.graph {
+    width: calc(100% - var(--legend-width-when-large));
+  }
 }
