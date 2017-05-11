@@ -15,9 +15,17 @@ svg.graph {
   height: 100%;
 }
 
-.category-icon {
-  fill: currentColor;
-  stroke: currentColor;
+.sorting-option {
+  transition: all 200ms ease;
+  cursor: pointer;
+}
+
+.sorting-option:hover {
+  text-decoration: underline;
+}
+
+.sorting-option.active {
+  font-weight: bold;
 }
 
 @media (min-width: 480px) and (max-width: 1023px) {

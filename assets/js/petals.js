@@ -96,7 +96,7 @@ class PetalVisualization {
     this.graphPadding = {
       top: 40,
       right: 40,
-      bottom: 40,
+      bottom: 60,
       left: 50
     };
   }
@@ -110,6 +110,7 @@ class PetalVisualization {
     this.createAxes(scales);
     this.createFlowers(scales);
     this.createLegend();
+    this.createSortingControls()
     this.attachHoverPetals();
   }
 
@@ -305,6 +306,41 @@ class PetalVisualization {
       .attr('transform', `translate(30 15)`);
   }
 
+  createSortingControls() {
+    this.sortingGroupEl = this.graphEl.append('g')
+      .classed('sorting-controls', true)
+      .attr('transform', `translate(
+        ${this.graphPadding.left}
+        ${this.containerDimensions.height - 25})`);
+
+    let sortingByLabel = this.sortingGroupEl.append('text')
+      .style('font-size', '14px')
+      .text('Sorting by ');
+
+    let sortingGroupsData = [
+      { name: 'country name', selected: true },
+      { name: 'the index average', selected: false },
+      { name: 'a category', selected: false }];
+
+    this.sortingGroups = this.sortingGroupEl.selectAll('.sorting-option')
+      .data(sortingGroupsData)
+
+    this.sortingGroups.enter()
+      .append('text')
+        .classed('sorting-option', true)
+        .text(d => d.name)
+        .style('font-size', '14px')
+        .classed('active', d => d.selected)
+        .attr('dx', sortingByLabel.node().getBoundingClientRect().width + 10)
+        .attr('dy', (d, i) => (i-1) * 18)
+        .each((d, i, nodes) => {
+          return d3.select(nodes[i])
+            .classed(`sorting-option-${slugify(d.name)}`, true);
+        })
+        .on('click', (d, i, nodes) => {
+          alert(d.name)
+        });
+  }
 
   styleAxisNodes(nodes) {
     nodes.selectAll('.domain')
