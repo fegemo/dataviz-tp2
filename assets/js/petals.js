@@ -159,8 +159,11 @@ class PetalVisualization {
   }
 
   createFlowers(scales) {
-    let flowerGroupEl = this.mainGroupEl.selectAll('g')
-      .data(this.data)
+    this.flowersEl = this.mainGroupEl
+      .selectAll('g')
+      .data(this.data);
+
+    let flowerGroupEl = this.flowersEl
       .enter()
       .append('g')
       .classed('flower', true)
@@ -338,8 +341,52 @@ class PetalVisualization {
             .classed(`sorting-option-${slugify(d.name)}`, true);
         })
         .on('click', (d, i, nodes) => {
-          alert(d.name)
+          // alert(d.name)
+          this.sortBy(d.name, 'housing');
         });
+
+    this.legendEl.selectAll('.legend-flower .petal')
+      .on('click', (d, i, nodes) => {
+        this.sortBy('a category', d.indexName);
+      });
+  }
+
+  sortBy(criterion, category = null) {
+    let comparison = (a, b) => a > b;
+    switch (criterion) {
+      case 'country name':
+        comparison = (a, b) => {
+          let v = d3.descending(a.name, b.name);
+          return v;
+        }
+        break;
+      case 'the index average':
+        comparison = (a, b) => d3.descending(a.averageIndex(), b.averageIndex());
+        break;
+      case 'a category':
+        comparison = (a, b) => d3.descending(a.indices
+          .find(i => i.name === category).value,
+          b.indices.find(i => i.name === category).value);
+        break;
+    }
+    this.data.sort(comparison);
+    this.updateFlowers();
+  }
+
+  updateFlowers() {
+    let scales = this.getScales();
+    let newX = scales.x.domain(this.data.map(c => c.name)).copy();
+    let t = d3.transition()
+      .duration(750)
+      .ease(d3.easeCubicOut);
+
+    this.flowersEl = this.mainGroupEl
+      .selectAll('g.flower')
+      .sort((a, b) => newX(a.name) - newX(b.name))
+      .transition(t)
+        .delay((_, i) => i * 20)
+        .attr('transform', (d, i, nodes) =>
+          `translate(${newX(d.name)}, ${scales.y(d.averageIndex())})`);
   }
 
   styleAxisNodes(nodes) {
