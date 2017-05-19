@@ -254,7 +254,7 @@ class PetalVisualization {
       .enter()
       .append('g')
         .attr('transform', `translate(
-          ${this.legendEl.node().getClientRects()[0].width/2}, 100) scale(2.5)`)
+          ${this.legendEl.node().getClientRects()[0].width/2}, 135) scale(2.5)`)
         .classed('petal', true)
         .classed('category', true)
         .html(d => d)
@@ -266,7 +266,7 @@ class PetalVisualization {
     // cria os ícones das categorias e seus nomes
     let categoryGroups = this.legendEl.append('g')
       .classed('categories', true)
-      .attr('transform', `translate(0 ${flowerGroup.node().getBoundingClientRect().bottom})`)
+      .attr('transform', `translate(0 ${flowerGroup.node().getBoundingClientRect().bottom - 55})`)
       .selectAll('g.category')
       .data(categories)
       .enter()
@@ -310,40 +310,83 @@ class PetalVisualization {
   }
 
   createSortingControls() {
-    this.sortingGroupEl = this.graphEl.append('g')
+    this.sortingGroupEl = this.legendEl.append('g')
       .classed('sorting-controls', true)
       .attr('transform', `translate(
-        ${this.graphPadding.left}
-        ${this.containerDimensions.height - 25})`);
+        ${0}
+        ${30})`);
 
-    let sortingByLabel = this.sortingGroupEl.append('text')
+    this.sortingByLabel = this.sortingGroupEl.append('text')
       .style('font-size', '14px')
+      .style('transform', 'translateY(-18px)')
       .text('Sorting by ');
+    this.sortingGroupEl.append('circle')
+      .attr('cx', this.sortingByLabel.node().getBoundingClientRect().width/2)
+      .attr('cy', -10)
+      .attr('r', 3)
+      .attr('fill', 'transparent')
+      .attr('stroke', 'orange')
+      .attr('stroke-width', '1');
 
-    let sortingGroupsData = [
+
+    this.sortingGroupsData = [
       { name: 'country name', selected: true },
       { name: 'the index average', selected: false },
       { name: 'a category', selected: false }];
+    this.currentSort = {
+      criterion: this.sortingGroupsData.find(sg => sg.selected).name,
+      order: 'ascending',
+      category: null
+    }
 
-    this.sortingGroups = this.sortingGroupEl.selectAll('.sorting-option')
-      .data(sortingGroupsData)
+    this.sortingGroups = this.sortingGroupEl
+      .selectAll('.sorting-option')
+      .data(this.sortingGroupsData)
 
-    this.sortingGroups.enter()
-      .append('text')
+    let sortingGroupsEnter = this.sortingGroups.enter();
+    sortingGroupsEnter.append('text')
         .classed('sorting-option', true)
         .text(d => d.name)
         .style('font-size', '14px')
         .classed('active', d => d.selected)
-        .attr('dx', sortingByLabel.node().getBoundingClientRect().width + 10)
+        .attr('dx', this.sortingByLabel.node().getBoundingClientRect().width + 13)
         .attr('dy', (d, i) => (i-1) * 18)
         .each((d, i, nodes) => {
           return d3.select(nodes[i])
             .classed(`sorting-option-${slugify(d.name)}`, true);
         })
         .on('click', (d, i, nodes) => {
-          // alert(d.name)
           this.sortBy(d.name, 'housing');
         });
+
+    sortingGroupsEnter.append('circle')
+      .attr('cx', this.sortingByLabel.node().getBoundingClientRect().width + 8)
+      .attr('cy', (d, i) => (i-1) * 18 - 4)
+      .attr('r', 3)
+      .attr('fill', 'transparent')
+      .attr('stroke', 'orange')
+      .attr('stroke-width', '1');
+
+    this.sortingLinkToActiveSortOptionData = [
+      { x: this.sortingByLabel.node().getBoundingClientRect().width/2, y: -10 },
+      { x: this.sortingByLabel.node().getBoundingClientRect().width/2, y: 5 },
+      { x: this.sortingByLabel.node().getBoundingClientRect().width + 8, y: -18 - 4 }
+    ];
+    this.sortingGroupEl.select('path')
+      .remove();
+    this.sortingGroupEl
+      .datum(this.sortingLinkToActiveSortOptionData)
+      .append('path')
+      .classed('link-to-active-sort', true)
+      .attr('d',
+        d3.line()
+          .x(d => d.x)
+          .y(d => d.y)
+          .curve(d3.curveBasis)
+      )
+      .attr('stroke-width', '1')
+      .attr('stroke', 'silver')
+      .attr('fill', 'transparent')
 
     this.legendEl.selectAll('.legend-flower .petal')
       .on('click', (d, i, nodes) => {
@@ -352,23 +395,61 @@ class PetalVisualization {
   }
 
   sortBy(criterion, category = null) {
+    this.sortingGroupsData.forEach(sg => sg.selected = criterion === sg.name)
+    this.sortingGroupEl
+      .selectAll('.sorting-option')
+      .data(this.sortingGroupsData)
+      .classed('active', d => d.selected);
+
+    let order = criterion === this.currentSort.criterion ?
+      // mesmo critério que anterior, então alterna
+      (this.currentSort.order === 'ascending' ? 'descending' : 'ascending'):
+      // se mudou critério, default para 'ascending'
+      'ascending';
+
+    this.currentSort.criterion = criterion;
+    this.currentSort.order = order;
+    this.currentSort.category = category;
     let comparison = (a, b) => a > b;
     switch (criterion) {
       case 'country name':
         comparison = (a, b) => {
-          let v = d3.descending(a.name, b.name);
+          let v = d3[order](a.name, b.name);
           return v;
         }
         break;
       case 'the index average':
-        comparison = (a, b) => d3.descending(a.averageIndex(), b.averageIndex());
+        comparison = (a, b) => d3[order](a.averageIndex(), b.averageIndex());
         break;
       case 'a category':
-        comparison = (a, b) => d3.descending(a.indices
+        comparison = (a, b) => d3[order](a.indices
           .find(i => i.name === category).value,
           b.indices.find(i => i.name === category).value);
         break;
     }
+
+
+    this.sortingGroupEl.select('path')
+      .remove();
+    this.sortingLinkToActiveSortOptionData
+    [this.sortingLinkToActiveSortOptionData.length - 1] = {
+      x: this.sortingByLabel.node().getBoundingClientRect().width + 8,
+      y: (this.sortingGroupsData.map(d => d.name).indexOf(criterion) - 1) * 18 - 4
+    };
+    this.sortingGroupEl
+      .datum(this.sortingLinkToActiveSortOptionData)
+      .append('path')
+      .classed('link-to-active-sort', true)
+      .attr('d',
+        d3.line()
+          .x(d => d.x)
+          .y(d => d.y)
+          .curve(d3.curveBasis)
+      )
+      .attr('stroke-width', '1')
+      .attr('stroke', 'silver')
+      .attr('fill', 'transparent')
+
     this.data.sort(comparison);
     this.updateFlowers();
   }
