@@ -48,7 +48,38 @@ class Petal {
   }
 
   static get colorScale() {
-    Petal._colorScale = Petal._colorScale || d3.scaleOrdinal(d3.schemeCategory20);
+    Petal._colorScale = Petal._colorScale ||
+      // escala padrão do d3
+      // d3.scaleOrdinal(d3.schemeCategory20);
+      // escala criada por mim
+      // d3.scaleOrdinal([
+      //   '#5F99FD',
+      //   '#2AFDBF',
+      //   '#BBFE05',
+      //   '#FD8E3E',
+      //   '#FD5176',
+      //   '#FEF03F',
+      //   '#5CFE17',
+      //   '#10FE8A',
+      //   '#1018FE',
+      //   '#CF50FE',
+      //   '#FE1F10'
+      // ]);
+    // escala baseada na escala da Google
+    d3.scaleOrdinal([
+      '#3366cc',
+      '#dc3912',
+      '#ff9900',
+      '#109618',
+      '#dd4477',
+      '#b82e2e',
+      '#994499',
+      '#22aa99',
+      '#aaaa11',
+      '#329262',
+      '#5574a6',
+      '#3b3eac'
+    ]);
     return Petal._colorScale;
   }
 
@@ -190,7 +221,7 @@ class PetalVisualization {
     // miolo
     const kernelRadius = 2;
     flowerGroupEl.append('circle')
-      .attr('fill', 'black')
+      .attr('fill', 'white')
       .attr('r', kernelRadius);
 
     // caule
