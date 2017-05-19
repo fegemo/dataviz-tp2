@@ -29,7 +29,7 @@ class Petal {
     let petalData = Petal.getPetalData(flowerType)
       .concat(Petal.getPetalData(flowerType).map(p => ({ x: p.x, y: -p.y })).reverse());
 
-    flowerContainer.
+    return flowerContainer.
       append('path')
       .attr('d', petal => Petal.getPathGenerator({
         xScale: d3.scaleLinear().range([0, petal.value * 25]),
@@ -38,7 +38,12 @@ class Petal {
       .attr('stroke', Petal.colorScale(i))
       .attr('stroke-width', 2)
       .attr('fill', Petal.colorScale(i))
-      .attr('transform', d => `rotate(${i / nodes.length * 360}) translate(2, 0)`);
+      .attr('transform', d => `rotate(${i / nodes.length * 360}) translate(2, 0) scale(1, 1)`)
+        .transition(this.t)
+        .attr('transform', d => `rotate(${i / nodes.length * 360}) translate(2, 0) scale(0.5, 1)`)
+        .transition(this.t)
+          .delay((_1, _2) => 1500+(i * 50))
+          .attr('transform', d => `rotate(${i / nodes.length * 360}) translate(2, 0) scale(1, 1)`);
 
   }
 
@@ -159,6 +164,10 @@ class PetalVisualization {
   }
 
   createFlowers(scales) {
+    this.t = d3.transition()
+      .duration(400)
+      .ease(d3.easeCubicOut);
+
     this.flowersEl = this.mainGroupEl
       .selectAll('g')
       .data(this.data);
@@ -167,8 +176,16 @@ class PetalVisualization {
       .enter()
       .append('g')
       .classed('flower', true)
+      .style('opacity', 0.25)
       .attr('transform', (d, i, nodes) =>
-        `translate(${scales.x(d.name)}, ${scales.y(d.averageIndex())})`);
+        `translate(${scales.x(d.name)}, ${scales.y(d.averageIndex())*1.5})`)
+    flowerGroupEl
+      .transition(this.t)
+        .delay(() => d3.randomUniform(1000, 2800)())
+        .duration(2000)
+        .style('opacity', 1)
+        .attr('transform', (d, i, nodes) =>
+          `translate(${scales.x(d.name)}, ${scales.y(d.averageIndex())})`);
 
     // miolo
     const kernelRadius = 2;
@@ -182,8 +199,8 @@ class PetalVisualization {
       .attr('stroke-width', '1')
       .attr('opacity', 0.3)
       .attr('x1', 0)
-      .attr('y1', d => this.graphDimensions.height - scales.y(d.averageIndex()))
       .attr('x2', 0)
+      .attr('y1', d => this.graphDimensions.height - scales.y(d.averageIndex()))
       .attr('y2', kernelRadius);
 
     // texto no caule
@@ -212,8 +229,8 @@ class PetalVisualization {
         .html(d => d)
         .each((d, i, nodes) => {
           // para cada pétala...
-          d.dropPetal(d3.select(nodes[i]), i, nodes);
-        });
+          return d.dropPetal(d3.select(nodes[i]), i, nodes);
+        })
   }
 
   attachHoverPetals() {
@@ -260,7 +277,7 @@ class PetalVisualization {
         .html(d => d)
         .each((d, i, nodes) => {
           // para cada pétala...
-          d.dropPetal(d3.select(nodes[i]), i, nodes);
+          return d.dropPetal(d3.select(nodes[i]), i, nodes);
         });
 
     // cria os ícones das categorias e seus nomes
