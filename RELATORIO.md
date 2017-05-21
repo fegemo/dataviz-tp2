@@ -17,8 +17,8 @@ Autores do trabalho:
 
 Foram implementadas as funcionalidades de:
 
-- **Legenda**: há uma **legenda à direita da visualização**, mostrando,
-  com ícone, nome e cor, cada categoria de subíndice dos dados.
+- **Legenda** (_extra_): há uma **legenda à direita da visualização**,
+  mostrando, com ícone, nome e cor, cada categoria de subíndice dos dados.
 
   ![](assets/img/docs/legend.png)
 - **Ordenação**: há controles de ordenação no canto superior direito
@@ -42,11 +42,13 @@ Foram implementadas as funcionalidades de:
   **são destacadas em relação às outras**, que ficam menos opacas.
 
   ![](assets/img/docs/highlighting.png)
-- **Animação de entrada**: as **flores sobem e desabrocham uma a uma** quando
-  a visualização é aberta pela primeira vez.
+- **Animação de entrada** (_extra_): as **flores sobem e desabrocham uma a
+  uma** quando a visualização é aberta pela primeira vez.
 - **Pétalas com formas**: em vez de desenhar pétalas como linhas retas, elas
   foram desenhadas como _paths_ com uma cor de preenchimento.
-  - _Extra_: é possível usar outros formatos de pétalas colocando `?petal=FORMATO` na URL. Os formatos disponíveis são [`daisy`][daisy] (o padrão), [`ornitop`][ornitop] e
+  - _Extra_: é possível usar outros formatos de pétalas colocando
+  `?petal=FORMATO` na URL. Os formatos disponíveis são [`daisy`][daisy]
+  (o padrão), [`ornitop`][ornitop] e
   [`cylindric`][cylindric].
 
 [daisy]: https://github.com/fegemo/dataviz-tp2/?petal=daisy
@@ -59,4 +61,7 @@ A tabela foi desenvolvida usando recursos da versão ES2015 da linguagem
 JavaScript (_e.g._, _arrow functions_, classes) e também de recursos nível
 4 do CSS (_e.g._, variáveis, _nesting_, função de cores).
 
-Há três classes: `Country`, `Petal` e `PetalVisualization`. A primeira contém a informação de cada país, com o nome e seus índices. A segunda contém as informações visuais sobre cada pétala. A terceira contém a maior parte do código e gere a criação e atualização de toda a visualização.
+Há três classes: `Country`, `Petal` e `PetalVisualization`. A primeira
+contém a informação de cada país, com o nome e seus índices. A segunda
+contém as informações visuais sobre cada pétala. A terceira contém a
+maior parte do código e gere a criação e atualização de toda a visualização.
