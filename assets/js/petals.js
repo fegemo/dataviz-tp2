@@ -13,10 +13,11 @@ class Country {
 }
 
 class Petal {
-  constructor({ name, value }, country) {
+  constructor({ name, value }, country, flowerType) {
     this.value = value;
     this.indexName = name;
     this.country = country;
+    this.flowerType = flowerType;
   }
 
 
@@ -25,9 +26,8 @@ class Petal {
       .classed(`category`, true)
       .classed(`category-${slugify(this.indexName)}`, true);
 
-    let flowerType = 'ornitop';
-    let petalData = Petal.getPetalData(flowerType)
-      .concat(Petal.getPetalData(flowerType).map(p => ({ x: p.x, y: -p.y })).reverse());
+    let petalData = Petal.getPetalData(this.flowerType)
+      .concat(Petal.getPetalData(this.flowerType).map(p => ({ x: p.x, y: -p.y })).reverse());
 
     return flowerContainer.
       append('path')
@@ -83,16 +83,16 @@ class Petal {
     return Petal._colorScale;
   }
 
-  static getPetalData(flowerType = 'daisy') {
+  static getPetalData(flowerType) {
     let petalByFlowerType = {
-      daisy: [
+      ornitop: [
         { x: 0.00, y: 0.00},
         { x: 0.25, y: 1.00},
         { x: 0.50, y: 0.75},
         { x: 0.75, y: 0.50},
         { x: 1.00, y: 0.00}
       ],
-      ornitop: [
+      daisy: [
         { x: 0.00, y: 0.00},
         { x: 0.25, y: 0.20},
         { x: 0.50, y: 0.85},
@@ -135,6 +135,10 @@ class PetalVisualization {
       bottom: 60,
       left: 50
     };
+    this.flowerType = getParameterByName('petal', location.href);
+    if (['daisy', 'ornitop', 'cylindric'].indexOf(this.flowerType) < 0) {
+      this.flowerType = 'daisy';
+    }
   }
 
   load() {
@@ -256,7 +260,7 @@ class PetalVisualization {
 
     petalsGroupEl.selectAll('g.petal')
       .data(d => d.indices.map(
-        index => new Petal(d.indices.find(i => i.name === index.name), d)))
+        index => new Petal(d.indices.find(i => i.name === index.name), d, this.flowerType)))
       .enter()
       .append('g')
         .classed('petal', true)
@@ -340,7 +344,7 @@ class PetalVisualization {
       .classed('legend-flower', true);
 
     flowerGroup.selectAll('g.petal')
-      .data(categories.map(c => new Petal({ name: c, value: 1}, null)))
+      .data(categories.map(c => new Petal({ name: c, value: 1}, null, this.flowerType)))
       .enter()
       .append('g')
         .attr('transform', `translate(
