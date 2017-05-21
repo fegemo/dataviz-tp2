@@ -148,6 +148,8 @@ class PetalVisualization {
     this.createLegend();
     this.createSortingControls()
     this.attachHoverPetals();
+    this.attachClickCountries();
+    // this.attachHoverFlowers();
   }
 
   determineBounds() {
@@ -232,7 +234,8 @@ class PetalVisualization {
       .attr('x1', 0)
       .attr('x2', 0)
       .attr('y1', d => this.graphDimensions.height - scales.y(d.averageIndex()))
-      .attr('y2', kernelRadius);
+      .attr('y2', kernelRadius)
+      .classed('stem', true);
 
     // texto no caule
     flowerGroupEl.append('text')
@@ -262,6 +265,14 @@ class PetalVisualization {
           // para cada pétala...
           return d.dropPetal(d3.select(nodes[i]), i, nodes);
         })
+
+    // setinha mostrando que país está selecionado
+    flowerGroupEl.append('svg:image')
+      .attr('xlink:href', d => 'assets/img/arrow-up.svg')
+      .attr('height', 15)
+      .attr('width', 15)
+      .attr('transform', d => `translate(-7.5 ${this.graphDimensions.height - scales.y(d.averageIndex()) + 5})`)
+      .classed('arrow', true)
   }
 
   attachHoverPetals() {
@@ -283,6 +294,37 @@ class PetalVisualization {
         }, 400);
       });
   }
+
+  attachClickCountries() {
+    this.containerEl.selectAll('.flower')
+      .on('click', (d, i, nodes) => {
+        nodes[i].classList.toggle('selected');
+        // let clickedFlower = d3.select().
+        // clickedFlower.classed('selected', true)
+      });
+  }
+
+
+  // attachHoverFlowers() {
+  //   this.tooltipEl = this.containerEl.append('g')
+  //     .classed('tooltip', true)
+  //     .classed('hidden', true);
+  //
+  //   this.tooltipBars = this.tooltipEl.selectAll('g.tooltip-category')
+  //     .data(this.data[0].map(d => { name: d.name, value: 1 }));
+  //   this.tooltipBars.enter().append('g')
+  //     .classed('tooltip-category')
+  //     .
+  //
+  //   this.containerEl.selectAll('.flower')
+  //     .on('mouseover', (d, i, nodes) => {
+  //       this.tooltipEl.classed('hidden', false);
+  //       this.tooltipEl.datum(d);
+  //     })
+  //     .on('mouseout', (d, i, nodes) => {
+  //       this.tooltipEl.classed('hidden', true);
+  //     });
+  // }
 
   createLegend() {
     // housing,income,jobs,community,education,environment,
